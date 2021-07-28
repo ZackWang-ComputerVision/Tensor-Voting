@@ -1,29 +1,32 @@
-im = imread('./rice.jpg');
-gray_im = rgb2gray(im);
+
+im = imread('./parasite.jpg');
+gray_im = im2gray(im);
 s = size(gray_im);
 
 %--------------------------------------------------------------------------
 % tensor voting
 %--------------------------------------------------------------------------
-% tensors = pixel2tensor(gray_im, 3, 18);
-% result = get_eig(tensors);
-% img = zeros(length(result), 1);
-% diff = abs(max(result)) - abs(min(result));
-% thresh = diff * 0.45 + abs(min(result));
-% 
-% for i = 1:length(result)
-%     if abs(result(i)) > thresh
-%         img(i) = 255;
-%     else
-%         img(i) = 0;
-%     end
-% end
-% 
-% img = reshape(img, s(1), s(2)).';
-% 
-% Im = uint8(255) * ones(s(1),s(2),'uint8');
-% Im(:,:) = img;
-% imshow(Im);
+tic;
+tensors = pixel2tensor(gray_im, 3, 1);
+toc;
+result = get_eig(tensors);
+img = zeros(length(result), 1);
+diff = abs(min(result)) - abs(max(result));
+thresh = diff * 0.35 + abs(max(result));
+
+for i = 1:length(result)
+    if abs(result(i)) > thresh
+        img(i) = 255;
+    else
+        img(i) = 0;
+    end
+end
+
+img = reshape(img, s(2), s(1)).';
+
+Im = uint8(255) * ones(s(1),s(2),'uint8');
+Im(:,:) = img;
+imshow(Im);
 
 
 
