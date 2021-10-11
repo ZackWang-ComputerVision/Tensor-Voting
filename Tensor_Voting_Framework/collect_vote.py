@@ -57,9 +57,17 @@ def collect_votes (mat, n_neib, cone_angle, const, sigma):
       val, vec = np.linalg.eig(voter)
 
       if (val[0] - val[1]) != 0:
-        norm_dir = get_degree(vec[0][0], vec[0][1])
         
+        norm_dir = get_degree(vec[0][0], vec[1][0])
+
+        #i_max = np.argmax([val[0], val[1]])
+        #norm_dir = get_degree(vec[0][i_max], vec[1][i_max])
+        #norm_dir = get_degree(vec[0][0], vec[0][1])
+
+
+        change_sign = False
         if norm_dir > 180:
+          change_sign = True
           norm_dir -= 180
         
         tangent_dir = norm_dir + 90
@@ -70,10 +78,10 @@ def collect_votes (mat, n_neib, cone_angle, const, sigma):
         low_range = tangent_dir - cone_angle
         
         if up_range > 180:
-            up_range = up_range - 180
+            up_range -= 180
 
         if low_range < 0:
-            low_range = low_range + 180
+            low_range += 180
 
         projection_mat = np.zeros((kernel_size, kernel_size, 2, 2))
         
@@ -96,19 +104,22 @@ def collect_votes (mat, n_neib, cone_angle, const, sigma):
                       degree = degree + 180
                 
                 
-                projection = get_projection(degree - tangent_dir, r, const, sigma)
+                projection = get_projection(degree, tangent_dir, r, const, sigma, change_sign)
 
-                #cast_vote = np.multiply(projection, voter)
+                #cast_vote = np.dot(projection, voter)
                 cast_vote = projection * voter
                 projection_mat[i][j] = cast_vote
 
                 opp_y = n_neib + y
                 opp_x = n_neib + x
                 if i != opp_y:
-                  projection_mat[opp_y][opp_x] = cast_vote
-        #print(projection_mat)
-        #print("==============================")
+                  opp_projection = get_projection(degree, tangent_dir, r, const, sigma, change_sign)
+                  opp_cast_vot = opp_projection * voter
+                  #opp_cast_vot = np.dot(opp_projection, voter)
+                  projection_mat[opp_y][opp_x] = opp_cast_vot
+
         accumulated_tensor_mat[(row - n_neib) : (row + n_neib + 1), (col - n_neib) : (col + n_neib + 1)] += projection_mat
+
   return accumulated_tensor_mat           
 
 
@@ -122,14 +133,21 @@ def eigen_decompose (mat, n_neib):
     for col in range(n_neib, shape[1] - n_neib):
       t = mat[row][col]
       val, vec = np.linalg.eig(t)
+      #u, s, v = np.linalg.svd(t)
 
-      eig_diff = abs(val[0] - val[1])
+      eig_diff = abs( abs(val[0]) - abs(val[1]) )
       val_mat[row][col] = eig_diff
-      e1 = np.array([vec[0][0], vec[0][1]])
 
-      vec_mat[row][col] = np.outer(np.transpose(e1), e1)
-      #e2 = np.array([vec[1][0], vec[1][1]])
-      #vec_mat[row][col] = eig_diff * np.outer(np.transpose(e1), e1) + val[1] * (np.outer(np.transpose(e1), e1) + np.outer(np.transpose(e2), e2))
+      e1 = np.array([vec[0][0], vec[1][0]])
+      #i_max = np.argmax([val[0], val[1]])
+      #e1 = np.array([vec[0][i_max], vec[1][i_max]])
+      
+      #e1 = np.array([vec[0][0], vec[0][1]])
+
+      vec_mat[row][col] = eig_diff * np.outer(np.transpose(e1), e1)
+      #i_min = np.argmin([val[0], val[1]])
+      #e2 = np.array([vec[i_min][0], vec[i_min][1]])
+      #vec_mat[row][col] = eig_diff * np.outer(np.transpose(e1), e1) + min(val[0], val[1]) * (np.outer(np.transpose(e1), e1) + np.outer(np.transpose(e2), e2))
   
   return val_mat, vec_mat
 

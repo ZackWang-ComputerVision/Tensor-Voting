@@ -28,13 +28,13 @@ def iterative_tv (img, cone_angle, sigma, percent, noise):
   val_mat = img
 
   angle = cone_angle
-  while angle >= 45:
+  while angle >= 5:
     tensor_mat = collect_votes(vec_mat, n_neib, angle, const, sigma)
     val_mat, vec_mat = eigen_decompose(tensor_mat, n_neib)
     val_mat, vec_mat = threshold(val_mat, vec_mat, n_neib, percent)
     angle -= 5
-
   
   size = np.shape(val_mat)
-  result = val_mat[n_neib : size[0] - n_neib, n_neib : size[1] - n_neib]
-  return result
+  result_val = val_mat[n_neib : size[0] - n_neib, n_neib : size[1] - n_neib]
+  result_vec = vec_mat[n_neib : size[0] - n_neib, n_neib : size[1] - n_neib]
+  return result_val, result_vec
